@@ -2,13 +2,12 @@
 import java.io.*;
 import java.util.*;
 //======================================================
-class R1
+class R1 //class that holds the main method
 {  
-  public static void main(String[] args) throws 
-                                             IOException
+  public static void main(String[] args) throws IOException
   {
     System.out.println("R1 compiler written by Christopher Brady");
-    if (args.length != 1)
+    if (args.length != 1) // there needs to be an argument in the cmd line, used for the file names
     {
       System.err.println("Wrong number cmd line args");  
       System.exit(1);
@@ -17,23 +16,23 @@ class R1
     // set to true to debug token manager
     boolean debug = false;
 
-    // build the input and output file names
+    // create the names of the input and output files using the name specified in args
     String inFileName = args[0] + ".s";
     String outFileName = args[0] + ".a";
 
     // construct file objects
-    Scanner inFile = new Scanner(new File(inFileName));
-    PrintWriter outFile = new PrintWriter(outFileName);
+    Scanner inFile = new Scanner(new File(inFileName)); // create a scanner object called inFile which will scan a file object with the name given by inFileName
+    PrintWriter outFile = new PrintWriter(outFileName); // create a printwriter object called outFile which will write to a file with the name given by outFileName
 
     // identify compiler/author in the output file
     outFile.println("; from R1 compiler written by Christopher Brady");
     outFile.println("          !register");
 
     // construct objects that make up compiler
-    R1SymTab st = new R1SymTab();
-    R1TokenMgr tm =  new R1TokenMgr(inFile, outFile, debug);
+    R1SymTab st = new R1SymTab(); // create the symbol table (table with all the names of the variables in the input file)
+    R1TokenMgr tm =  new R1TokenMgr(inFile, outFile, debug); // create the token manager
     R1CodeGen cg = new R1CodeGen(outFile, st);
-    R1Parser parser = new R1Parser(st, tm, cg);
+    R1Parser parser = new R1Parser(st, tm, cg); // create the parser
 
     // parse and translate
     try
@@ -52,7 +51,7 @@ class R1
   }
 }                                           // end of S1
 //======================================================
-interface R1Constants
+interface R1Constants // Interface class that specifies which ints belong to which token variables
 {
   // integers that identify token kinds
   int EOF = 0;
@@ -86,7 +85,7 @@ interface R1Constants
   };
 }                                  // end of S1Constants
 //======================================================
-class R1SymTab
+class R1SymTab //Symbol table class
 {
   private ArrayList<String> symbol;
   private ArrayList<String> value;
@@ -112,11 +111,11 @@ class R1SymTab
     
     int index = symbol.indexOf(s);
     
-    // if s is not in symbol, then add it 
+    // if s is already in symbol list, return s
     if (index >= 0)
         return index;
-    index = symbol.size();
-    symbol.add(s);
+    index = symbol.size();  // If s is not in the symbol list, make the index the last in the symbol list
+    symbol.add(s);          // add s to the symbol list
     needsDw.add(b);
     value.add(v);
     
@@ -329,8 +328,7 @@ class R1TokenMgr implements R1Constants
     }
 
     // get next char from inputLine
-    currentChar = 
-                inputLine.charAt(currentColumnNumber++);
+    currentChar = inputLine.charAt(currentColumnNumber++);
 
     // in S2, test for single-line comment goes here
   }
@@ -344,8 +342,7 @@ class R1Parser implements R1Constants
   private Token currentToken;
   private Token previousToken; 
   //-----------------------------------------
-  public R1Parser(R1SymTab st, R1TokenMgr tm, 
-                                           R1CodeGen cg)
+  public R1Parser(R1SymTab st, R1TokenMgr tm, R1CodeGen cg)
   {
     this.st = st;
     this.tm = tm;
@@ -382,8 +379,7 @@ class R1Parser implements R1Constants
     // Otherwise, get next token from token mgr and 
     // put it on the list.
     else
-      currentToken = 
-                  currentToken.next = tm.getNextToken();
+      currentToken = currentToken.next = tm.getNextToken();
   }
   //-----------------------------------------
   // getToken(i) returns ith token without advancing
@@ -474,12 +470,12 @@ class R1Parser implements R1Constants
     Token t;
     int left, expVal;
     t = currentToken;
-    consume(ID);
-    left = st.enter(t.image, "0", true); 
-    consume(ASSIGN);
-    expVal = expr();
-    cg.assign(left, expVal);
-    consume(SEMICOLON);
+    consume(ID); // consumes the ID, advancing to the "=" sign
+    left = st.enter(t.image, "0", true); // stores the ID in both the symbol table with a value of zero and a dw, and the index in a variable called left
+    consume(ASSIGN); // consumes the "=" sign, advancing to the numbers/ids to be added or multiplied
+    expVal = expr(); // calls the expression function, which will do calculations so that there's only one variable or number on the right of the assignment
+    cg.assign(left, expVal); // The code generator prints a statement to the output file
+    consume(SEMICOLON); // consumes the ";" sign,
   }
   //-----------------------------------------
   private void printlnStatement()
@@ -569,7 +565,7 @@ class R1Parser implements R1Constants
       case UNSIGNED:
         t = currentToken;
         consume(UNSIGNED);
-        index = st.enter("@"+t.image, t.image, false);
+        index = st.enter("@"+t.image, t.image, false); // every number is given its own variable
         return index;
       case PLUS:
         consume(PLUS);
@@ -625,8 +621,7 @@ class R1CodeGen
   //-----------------------------------------
   private void emitdw(String label, String value)
   {           
-    outFile.printf(
-             "%-9s dw        %s%n", label + ":", value);
+    outFile.printf("%-9s dw        %s%n", label + ":", value);
   }
   //-----------------------------------------
   public void endCode()
@@ -640,8 +635,8 @@ class R1CodeGen
       if(st.getneedsDw(i) == true)
         emitdw(st.getSymbol(i), st.getValue(i));
   }
-  public void freeTemp(int opndIndex){
-      if (st.isTemp(opndIndex))
+  public void freeTemp(int opndIndex){ // once a temporary variable is free to be used again, the temp index is decremented
+      if (st.isTemp(opndIndex)) 
         tempIndex--;
   }
   public void assign(int left, int expVal){ 
